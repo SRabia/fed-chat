@@ -1,0 +1,13 @@
+[package]
+name = "fed"
+version = "0.1.0"
+authors = ["sss <rabiasofiane01@gmail.com>"]
+license = "MIT"
+edition = "2021"
+
+[dependencies]
+crossterm = { version = "0.28.1", features = ["event-stream"] }
+futures = "0.3.30"
+ratatui = "0.28.0"
+tokio = { version = "1.35.1", features = ["full"] }
+tui-input = "0.10.0"
