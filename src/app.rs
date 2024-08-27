@@ -2,14 +2,10 @@ use crate::msg::MsgList;
 use std::error;
 
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Margin, Position, Rect},
-    style::{palette::tailwind, Color, Modifier, Style, Stylize},
-    symbols::scrollbar,
-    text::{Line, Masked, Span, Text},
-    widgets::{
-        Block, BorderType, Borders, ListItem, Paragraph, Scrollbar, ScrollbarOrientation,
-        ScrollbarState, Wrap,
-    },
+    layout::{Alignment, Constraint, Direction, Layout, Position, Rect},
+    style::{Color, Modifier, Style, Stylize},
+    text::{Line, Span, Text},
+    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
     Frame,
 };
 /// Application result type.

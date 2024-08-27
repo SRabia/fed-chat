@@ -1,32 +1,21 @@
 use ratatui::{
     buffer::Buffer,
     layout::{
-        Alignment,
-        Constraint::{self, Fill, Length, Max, Min, Percentage, Ratio},
+        Constraint::{self, Length, Max, Percentage},
         Layout, Rect,
     },
-    style::{palette::tailwind, Color, Modifier, Style, Stylize},
-    symbols,
-    text::Line,
+    // style::{palette::tailwind, Color},
     widgets::{
-        Block, Borders, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState,
-        StatefulWidget, Widget, Wrap,
+        Block, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, StatefulWidget,
+        Widget, Wrap,
     },
 };
 
-const SPACER_HEIGHT: u16 = 0;
-const ILLUSTRATION_HEIGHT: u16 = 4;
-const EXAMPLE_HEIGHT: u16 = ILLUSTRATION_HEIGHT + SPACER_HEIGHT;
+const HEIGHT_SPACER: u16 = 0;
+const HEIGH_MSG_TEXT_VIEW: u16 = 4;
+const HEIGHT_MSG_VIEW: u16 = HEIGH_MSG_TEXT_VIEW + HEIGHT_SPACER;
 
-// priority 2
-const MIN_COLOR: Color = tailwind::BLUE.c900;
-const MAX_COLOR: Color = tailwind::BLUE.c800;
-// priority 3
-const LENGTH_COLOR: Color = tailwind::SLATE.c700;
-const PERCENTAGE_COLOR: Color = tailwind::SLATE.c800;
-const RATIO_COLOR: Color = tailwind::SLATE.c900;
-// priority 4
-const FILL_COLOR: Color = tailwind::SLATE.c950;
+// const LENGTH_COLOR: Color = tailwind::SLATE.c700;
 
 #[derive(Default, Clone, Debug)]
 pub struct MsgList {
@@ -42,7 +31,7 @@ pub struct MsgList {
 impl MsgList {
     pub fn update_max_scroll_offset(&mut self) {
         if !self.messages.is_empty() {
-            self.max_scroll_offset = (self.messages.len() as u16 - 1) * EXAMPLE_HEIGHT;
+            self.max_scroll_offset = (self.messages.len() as u16 - 1) * HEIGHT_MSG_VIEW;
         }
     }
 
@@ -73,7 +62,7 @@ impl MsgList {
 
 impl Widget for MsgList {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let height = self.messages.len() as u16 * EXAMPLE_HEIGHT;
+        let height = self.messages.len() as u16 * HEIGHT_MSG_VIEW;
         let msg_area = Rect::new(0, 0, area.width, height + area.height);
         let mut msg_buf = Buffer::empty(msg_area);
 
@@ -90,13 +79,13 @@ impl Widget for MsgList {
         let constraints: Vec<Constraint> = self
             .messages
             .iter()
-            .map(|_| Max(EXAMPLE_HEIGHT)) //here have something more dynamic in height
+            .map(|_| Max(HEIGHT_MSG_VIEW)) //here have something more dynamic in height
             .collect();
 
         // self.selected_tab.render(content_area, &mut demo_buf);
         let msg_grid = Layout::vertical(constraints.as_slice()).split(content_area);
         for (i, m) in self.messages.iter().enumerate() {
-            Msg::new(m, Alignment::Right).render(msg_grid[i], &mut msg_buf);
+            Msg::new(m).render(msg_grid[i], &mut msg_buf);
         }
 
         let visible_content = msg_buf
@@ -118,36 +107,13 @@ impl Widget for MsgList {
     }
 }
 
-impl MsgList {
-    // fn render_axis(area: Rect, buf: &mut Buffer) {
-    //     let width = area.width as usize;
-    //     // a bar like `<----- 80 px ----->`
-    //     let width_label = format!("{width} px");
-    //     let width_bar = format!(
-    //         "<{width_label:-^width$}>",
-    //         width = width - width_label.len() / 2
-    //     );
-    //     Paragraph::new(width_bar.dark_gray())
-    //         .centered()
-    //         .block(Block::new().padding(Padding {
-    //             left: 0,
-    //             right: 0,
-    //             top: 1,
-    //             bottom: 0,
-    //         }))
-    //         .render(area, buf);
-    // }
-}
-
 struct Msg {
     msg: String,
-    align: Alignment,
 }
 
 impl Msg {
-    fn new(msg: &str, align: Alignment) -> Self {
+    fn new(msg: &str) -> Self {
         Self {
-            align,
             msg: msg.to_string(),
         }
     }
@@ -165,10 +131,10 @@ impl Widget for Msg {
         // let c: &[Constraint] = &[Min(10), Percentage(constrains_text_box)];
         let c: &[Constraint] = &[Percentage(100), Length(constrains_text_box)];
         let [area, _] =
-            Layout::vertical([Length(ILLUSTRATION_HEIGHT), Length(SPACER_HEIGHT)]).areas(area);
+            Layout::vertical([Length(HEIGH_MSG_TEXT_VIEW), Length(HEIGHT_SPACER)]).areas(area);
         let blocks = Layout::horizontal(c).split(area);
-        let color = LENGTH_COLOR;
-        let fg = Color::White;
+        // let color = LENGTH_COLOR;
+        // let fg = Color::White;
 
         let title = format!("len {}", constrains_text_box);
         // let title = "me".to_string();
