@@ -1,4 +1,4 @@
-use crate::msg::MsgList;
+use crate::msg::MsgView;
 use std::error;
 
 use ratatui::{
@@ -25,7 +25,7 @@ pub struct App {
     pub state: AppState,
     pub input: tui_input::Input,
     pub debug: String,
-    pub messages: MsgList,
+    pub msgview: MsgView,
 }
 
 impl Default for App {
@@ -33,7 +33,7 @@ impl Default for App {
         Self {
             state: AppState::Normal,
             input: tui_input::Input::default(),
-            messages: MsgList::default(),
+            msgview: MsgView::default(),
             debug: String::new(),
         }
     }
@@ -45,24 +45,24 @@ impl App {
         Self::default()
     }
     pub fn scroll_down(&mut self) {
-        self.messages.down();
+        self.msgview.down();
     }
 
     pub fn top(&mut self) {
-        self.messages.top();
+        self.msgview.top();
     }
 
     pub fn bottom(&mut self) {
-        self.messages.bottom();
+        self.msgview.bottom();
     }
 
     pub fn scroll_up(&mut self) {
-        self.messages.up();
+        self.msgview.up();
     }
 
     /// Handles the tick event of the terminal.
     pub fn tick(&mut self) {
-        self.messages.update_max_scroll_offset();
+        self.msgview.update_max_scroll_offset();
     }
 
     /// Set running to false to quit the application.
@@ -70,8 +70,11 @@ impl App {
         self.state = AppState::Quit;
     }
     pub fn accept_message_input(&mut self) {
-        self.messages.add_msg(self.input.value().into());
-        self.input.reset();
+        if !self.input.value().is_empty() {
+            self.msgview.add_msg(self.input.value().into());
+            self.input.reset();
+            self.msgview.down_one_msg();
+        }
     }
 
     pub fn editing(&mut self) {
@@ -113,7 +116,7 @@ impl App {
             .wrap(Wrap { trim: true });
         frame.render_widget(input, area_input);
         //improve this should not clone
-        frame.render_widget(self.messages.clone(), area_msgview);
+        frame.render_widget(self.msgview.clone(), area_msgview);
     }
 
     fn get_help_msg_style<'a>(&self, spans: Vec<Span<'a>>) -> Text<'a> {
@@ -163,7 +166,8 @@ impl App {
         frame.set_cursor_position(cursor_position);
 
         //TODO: refactor to remove clone
-        frame.render_widget(self.messages.clone(), area_msgview);
+
+        frame.render_widget(self.msgview.clone(), area_msgview);
     }
 
     pub fn draw(&mut self, frame: &mut Frame) {
