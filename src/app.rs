@@ -9,7 +9,7 @@ use ratatui::{
         Direction, Layout, Position, Rect,
     },
     style::{Color, Modifier, Style, Stylize},
-    text::{Line, Span, Text},
+    text::{Line, Span, Text, ToSpan},
     widgets::{
         Block, BorderType, Borders, Padding, Paragraph, Scrollbar, ScrollbarOrientation,
         ScrollbarState, Widget, Wrap,
@@ -155,10 +155,15 @@ impl App {
     }
 
     fn draw_single_chat(&self, msg: &str, area: Rect, buf: &mut Buffer) {
-        let wid_text_perc = msg.len() as f32 / area.width as f32;
+        let author = "toto le fromage"
+            .fg(Color::Red)
+            .add_modifier(Modifier::BOLD);
 
+        let msg = msg.to_span();
+        let max_len = msg.width().max(author.width());
+        let wid_text_perc = max_len as f32 / area.width as f32;
         let chat_box_wid = if wid_text_perc < 0.75 {
-            msg.len() as u16 + 2
+            max_len as u16 + 2
         } else {
             // let height = ((wid_text_perc - 0.75) / 0.75) as u16 + DEFAULT_CHAT_BOX_HEIGHT;
             (area.width as f32 * 0.75) as u16
@@ -171,14 +176,18 @@ impl App {
         // let color = LENGTH_COLOR;
         // let fg = Color::White;
 
-        let title = format!("len {}:{}", wid_text_perc, chat_box_wid);
+        let debug = format!("len {}:{}", wid_text_perc, chat_box_wid)
+            .fg(Color::LightRed)
+            .into_right_aligned_line();
+
         // let title = "me".to_string();
         let content = msg.to_string();
         // let content = format!("{}", self.msg.as_str());
         // let text = format!("{title}\n{content}");
         let block = Block::bordered()
-            .title(title)
+            .title(author)
             .padding(Padding::new(0, 0, 1, 0))
+            .title_bottom(debug)
             // .border_set(symbols::border::QUADRANT_OUTSIDE)
             .border_type(ratatui::widgets::BorderType::Rounded);
         // .border_style(Style::reset().fg(color).reversed())
