@@ -15,10 +15,13 @@ const HEIGHT_SPACER: u16 = 0;
 const HEIGH_MSG_TEXT_VIEW: u16 = 4;
 const HEIGHT_MSG_VIEW: u16 = HEIGH_MSG_TEXT_VIEW + HEIGHT_SPACER;
 
+// when scrolling to bottom will show {SCROLL_BOTTOM_NB_MSG_IN_SCOPE} nb of messages
+const SCROLL_BOTTOM_NB_MSG_IN_SCOPE: usize = 2;
+
 // const LENGTH_COLOR: Color = tailwind::SLATE.c700;
 
 #[derive(Default, Clone, Debug)]
-pub struct MsgList {
+pub struct MsgView {
     messages: Vec<String>,
     scroll_offset: u16,
     max_scroll_offset: u16,
@@ -28,10 +31,11 @@ pub struct MsgList {
 ///
 /// The order of the variants is the order in which they are displayed.
 
-impl MsgList {
+impl MsgView {
     pub fn update_max_scroll_offset(&mut self) {
-        if !self.messages.is_empty() {
-            self.max_scroll_offset = (self.messages.len() as u16 - 1) * HEIGHT_MSG_VIEW;
+        if self.messages.len() > SCROLL_BOTTOM_NB_MSG_IN_SCOPE {
+            self.max_scroll_offset =
+                (self.messages.len() - SCROLL_BOTTOM_NB_MSG_IN_SCOPE) as u16 * HEIGHT_MSG_VIEW;
         }
     }
 
@@ -44,10 +48,16 @@ impl MsgList {
     }
 
     pub fn down(&mut self) {
-        // self.messages.push(format!("down {}", self.scroll_offset));
         self.scroll_offset = self
             .scroll_offset
             .saturating_add(1)
+            .min(self.max_scroll_offset);
+    }
+
+    pub fn down_one_msg(&mut self) {
+        self.scroll_offset = self
+            .scroll_offset
+            .saturating_add(HEIGHT_MSG_VIEW)
             .min(self.max_scroll_offset);
     }
 
@@ -60,7 +70,7 @@ impl MsgList {
     }
 }
 
-impl Widget for MsgList {
+impl Widget for MsgView {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let height = self.messages.len() as u16 * HEIGHT_MSG_VIEW;
         let msg_area = Rect::new(0, 0, area.width, height + area.height);
@@ -85,6 +95,10 @@ impl Widget for MsgList {
         // self.selected_tab.render(content_area, &mut demo_buf);
         let msg_grid = Layout::vertical(constraints.as_slice()).split(content_area);
         for (i, m) in self.messages.iter().enumerate() {
+            // Msg::new(&format!(
+            //     "area h {},  h msg {} need {} off {}",
+            //     area.height, height, scrollbar_needed, self.scroll_offset
+            // ))
             Msg::new(m).render(msg_grid[i], &mut msg_buf);
         }
 

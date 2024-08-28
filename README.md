@@ -4,8 +4,9 @@ Simple chat application, testing out stuff nothing serious.
 
 ## todo ui
 - [X] have a bubble box on message sent with dynamic resizing
-- [ ] auto scrool to bottom
-- [ ] fix scrool down should stop when reach bottom
+- [X] auto scrool to bottom
+- [X] fix scrool down should stop when reach bottom
+- [ ] fix bubble msg wid fit with author
 - [ ] figure out height bubble box messages
 - [ ] local test receive message on ui
 - [ ] have a max len for message input
