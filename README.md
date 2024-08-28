@@ -8,9 +8,13 @@ Simple chat application, testing out stuff nothing serious.
 - [X] fix scrool down should stop when reach bottom
 - [ ] fix bubble msg wid fit with author
 - [ ] figure out height bubble box messages
+- [ ] figure out how to test rendering
 - [ ] local test receive message on ui
+- [ ] resize input chat box when out of view
+- [ ] have a C-Enter instead of Enter to accept input
 - [ ] have a max len for message input
 - [ ] naming is awful come with better names to distinguish ui from what coming next
+- [ ] put a message pop too small when frame size is too small
 
 
 
