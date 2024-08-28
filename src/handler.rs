@@ -17,6 +17,9 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
             KeyCode::Char('k') | KeyCode::Up => app.scroll_up_chat(),
             KeyCode::Char('g') | KeyCode::Home => app.scroll_top_chat(),
             KeyCode::Char('G') | KeyCode::End => app.scroll_botton_chat(),
+            KeyCode::Char('A') => {
+                app.accept_received_chat("just type `A` fucker hope you die in hell")
+            }
             _ => {}
         },
         AppState::Editing => match key_event.code {

@@ -23,7 +23,18 @@ const HEIGHT_SPACER: u16 = 0;
 
 // when scrolling to bottom will show {SCROLL_BOTTOM_NB_MSG_IN_SCOPE} nb of messages
 // const SCROLL_BOTTOM_NB_MSG_IN_SCOPE: usize = 2;
-const DEFAULT_CHAT_BOX_HEIGHT: u16 = 4;
+const CHAT_BOX_PADDING_BOTTOM: u16 = 1;
+const CHAT_BOX_PADDING_TOP: u16 = 1;
+const CHAT_BOX_AUTHOR_HEIGHT: u16 = 1;
+const CHAT_BOX_INFO_HEIGHT: u16 = 1;
+const CHAT_BOX_CHAT_HEIGHT: u16 = 1;
+
+const MIN_CHAT_BOX_HEIGHT: u16 = CHAT_BOX_CHAT_HEIGHT
+    + CHAT_BOX_PADDING_TOP
+    + CHAT_BOX_PADDING_BOTTOM
+    + CHAT_BOX_INFO_HEIGHT
+    + CHAT_BOX_AUTHOR_HEIGHT;
+
 // const HEIGHT_MSG_VIEW: u16 = DEFAULT_CHAT_BOX_HEIGHT + HEIGHT_SPACER;
 
 const SCROLL_BOTTOM_NB_CHAT_BOX_VISIBLE: i32 = 2;
@@ -33,13 +44,38 @@ pub enum AppState {
     Editing,
     Quit,
 }
+
+#[derive(Debug, PartialEq)]
+pub enum ChatType {
+    Sent,
+    Receive,
+    Debug,
+}
+
+#[derive(Debug)]
+struct Chat {
+    author: String,
+    msg_string: String,
+    typ: ChatType,
+}
+
+impl Chat {
+    fn new(author: String, msg_string: String, typ: ChatType) -> Self {
+        Self {
+            author,
+            msg_string,
+            typ,
+        }
+    }
+}
+
 /// Application.
 #[derive(Debug)]
 pub struct App {
     pub state: AppState,
     pub chat_input: tui_input::Input,
     pub debug: String, //TODO: remove this
-    chats: Vec<String>,
+    chats: Vec<Chat>,
     scroll_offset_chats: u16,
     max_scroll_offset_chats: u16,
 }
@@ -89,10 +125,23 @@ impl App {
 
     pub fn accept_chat_input(&mut self) {
         if !self.chat_input.value().is_empty() {
-            self.chats.push(self.chat_input.value().into());
+            self.chats.push(Chat::new(
+                "fromage".into(),
+                self.chat_input.value().into(),
+                ChatType::Sent,
+            ));
             self.chat_input.reset();
             self.scroll_botton_chat();
         }
+    }
+
+    pub fn accept_received_chat(&mut self, receive_msg: &str) {
+        self.chats.push(Chat::new(
+            "the other guy".into(),
+            receive_msg.into(),
+            ChatType::Receive,
+        ));
+        self.scroll_botton_chat();
     }
 
     pub fn editing(&mut self) {
@@ -148,18 +197,21 @@ impl App {
         let wid_text_perc = msg.len() as f32 / area.width as f32;
 
         if wid_text_perc < 0.75 {
-            DEFAULT_CHAT_BOX_HEIGHT
+            MIN_CHAT_BOX_HEIGHT
         } else {
-            ((wid_text_perc) / 0.75) as u16 + DEFAULT_CHAT_BOX_HEIGHT
+            ((wid_text_perc) / 0.75) as u16 + MIN_CHAT_BOX_HEIGHT
         }
     }
 
-    fn draw_single_chat(&self, msg: &str, area: Rect, buf: &mut Buffer) {
-        let author = "toto le fromage"
+    fn draw_single_chat(&self, chat: &Chat, area: Rect, buf: &mut Buffer) {
+        //TODO: clone ...
+        let author = chat
+            .author
+            .clone()
             .fg(Color::Red)
             .add_modifier(Modifier::BOLD);
 
-        let msg = msg.to_span();
+        let msg = chat.msg_string.to_span();
         let max_len = msg.width().max(author.width());
         let wid_text_perc = max_len as f32 / area.width as f32;
         let chat_box_wid = if wid_text_perc < 0.75 {
@@ -170,7 +222,12 @@ impl App {
         };
 
         // let c: &[Constraint] = &[Min(10), Percentage(constrains_text_box)];
-        let c: &[Constraint] = &[Percentage(100), Length(chat_box_wid)];
+        let (area_pos, c) = match chat.typ {
+            ChatType::Sent => (1, vec![Percentage(100), Length(chat_box_wid)]),
+            ChatType::Receive => (0, vec![Length(chat_box_wid), Percentage(100)]),
+            _ => (1, vec![Percentage(100), Length(chat_box_wid)]),
+        };
+        // let c: &[Constraint] = &[Percentage(100), Length(chat_box_wid)];
         let [area, _] = Layout::vertical([Length(area.height), Length(HEIGHT_SPACER)]).areas(area);
         let area_chat = Layout::horizontal(c).split(area);
         // let color = LENGTH_COLOR;
@@ -186,7 +243,13 @@ impl App {
         // let text = format!("{title}\n{content}");
         let block = Block::bordered()
             .title(author)
-            .padding(Padding::new(0, 0, 1, 0))
+            .padding(Padding::new(
+                0,
+                0,
+                CHAT_BOX_PADDING_TOP,
+                CHAT_BOX_PADDING_BOTTOM,
+            )) // TODO:something wrong here! when increase the
+            // default height dont follow
             .title_bottom(debug)
             // .border_set(symbols::border::QUADRANT_OUTSIDE)
             .border_type(ratatui::widgets::BorderType::Rounded);
@@ -197,7 +260,7 @@ impl App {
             .block(block)
             .wrap(Wrap { trim: true });
 
-        content.render(area_chat[1], buf); // right align
+        content.render(area_chat[area_pos], buf); // right align
     }
 
     fn draw_chat_discussion(&mut self, area: Rect, frame: &mut Frame) {
@@ -225,7 +288,7 @@ impl App {
             .iter()
             .enumerate()
             .map(|(i, m)| {
-                let height = Self::calculate_chat_box_rect_height(m, content_area);
+                let height = Self::calculate_chat_box_rect_height(&m.msg_string, content_area);
                 if i < scroll_count_stop {
                     total_height_chat_boxs += height;
                 }
@@ -235,7 +298,7 @@ impl App {
 
         let msg_grid = Layout::vertical(constraints_vertical.as_slice()).split(content_area);
         for (i, m) in self.chats.iter().enumerate() {
-            self.draw_single_chat(m.as_str(), msg_grid[i], &mut msg_buf);
+            self.draw_single_chat(m, msg_grid[i], &mut msg_buf);
         }
         //TODO: max a small offset to at least show some message at bottom
         self.max_scroll_offset_chats = total_height_chat_boxs;
