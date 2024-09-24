@@ -14,7 +14,7 @@ async fn main() -> AppResult<()> {
     // Initialize the terminal user interface.
     let backend = CrosstermBackend::new(io::stderr());
     let terminal = Terminal::new(backend)?;
-    let events = EventHandler::new(75);
+    let events = EventHandler::new(60000); // this make it that we don't redraw for nothing
     let mut tui = Tui::new(terminal, events);
     tui.init()?;
 

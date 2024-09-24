@@ -1,5 +1,5 @@
 // use crate::msg::MsgView;
-use std::error;
+use std::{error, time::Instant};
 
 use ratatui::{
     buffer::Buffer,
@@ -78,6 +78,9 @@ pub struct App {
     chats: Vec<Chat>,
     scroll_offset_chats: u16,
     max_scroll_offset_chats: u16,
+    fps: f64,
+    nb_frame: u64,
+    last_frame_s: std::time::Instant,
 }
 
 impl Default for App {
@@ -89,6 +92,9 @@ impl Default for App {
             debug: String::new(),
             max_scroll_offset_chats: 0,
             scroll_offset_chats: 0,
+            fps: 0.0,
+            nb_frame: 0,
+            last_frame_s: std::time::Instant::now(),
         }
     }
 }
@@ -303,7 +309,7 @@ impl App {
         //TODO: max a small offset to at least show some message at bottom
         self.max_scroll_offset_chats = total_height_chat_boxs;
 
-        self.debug += &format!("got height{}", self.max_scroll_offset_chats);
+        self.debug += &format!("fps {}", self.fps);
 
         let visible_content = msg_buf
             .content
@@ -369,6 +375,15 @@ impl App {
     }
 
     pub fn draw(&mut self, frame: &mut Frame) {
+        self.nb_frame += 1;
+        let now = Instant::now();
+        let elapsed = (now - self.last_frame_s).as_secs_f64();
+        if elapsed >= 1.0 {
+            self.fps = self.nb_frame as f64 / elapsed;
+            self.last_frame_s = now;
+            self.nb_frame = 0;
+        }
+
         let main_layout = Layout::default()
             .direction(Direction::Vertical)
             .margin(2)
